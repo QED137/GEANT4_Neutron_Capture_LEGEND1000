@@ -12,4 +12,4 @@ IMPROVEMENTS.md
 cmake_install.cmake
 .history/*
 .history
-.csv
+*.csv
