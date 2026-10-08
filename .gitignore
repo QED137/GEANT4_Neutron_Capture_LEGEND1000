@@ -7,3 +7,7 @@ CMakeFiles/
 *.root
 *.bin
 *.log
+IMPROVEMENTS.md 
+*.txt
+cmake_install.cmake
+
