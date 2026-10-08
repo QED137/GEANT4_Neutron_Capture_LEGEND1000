@@ -1,0 +1,28 @@
+#
+# run1.mac -- water, 2.5 MeV neutrons (thermal scattering is ON via the
+# TS_H_of_Water element names + G4HadronElasticPhysicsHP; no extra command
+# needed)
+#
+/control/verbose 2
+/run/verbose 2
+#
+/testhadr/det/setMat Water_ts
+/testhadr/det/setRadius 30 cm
+#
+/run/initialize
+#
+/gun/particle neutron
+/gun/energy 2.5 MeV
+#
+/analysis/setFileName run1
+/analysis/h1/set  1 100  0. 20. MeV
+/analysis/h1/set  2 100  0. 30. cm
+/analysis/h1/set  3 100  0. 20. MeV
+/analysis/h1/set 14 100  0. 20. MeV
+/analysis/h1/set 16 200  0.001 20. MeV log10
+/analysis/h1/set 19 100  0. 20. MeV
+/analysis/h1/set 20 100  0. 20. MeV
+/analysis/h1/set 24 100  0. 20. MeV
+#
+/run/printProgress 10000
+/run/beamOn 100000

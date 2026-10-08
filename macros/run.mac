@@ -1,0 +1,26 @@
+#
+# run.mac -- original config: 14.1 MeV neutrons on Li-7 sphere
+#
+/control/verbose 2
+/run/verbose 2
+#
+/testhadr/det/setIsotopeMat Li7 3 7 1.85 g/cm3
+/testhadr/det/setRadius 30 cm
+#
+/run/initialize
+#
+/analysis/setFileName run_li7
+/analysis/h1/set  1 100  0. 20. MeV
+/analysis/h1/set  2 100  0. 30. cm
+/analysis/h1/set  3 100  0. 20. MeV
+/analysis/h1/set 14 100  0. 20. MeV
+/analysis/h1/set 16 200  0.001 20. MeV log10
+/analysis/h1/set 19 100  0. 20. MeV
+/analysis/h1/set 20 100  0. 20. MeV
+/analysis/h1/set 24 100  0. 20. MeV
+#
+/gun/particle neutron
+/gun/energy 14.1 MeV
+#
+/run/printProgress 10000
+/run/beamOn 100000
