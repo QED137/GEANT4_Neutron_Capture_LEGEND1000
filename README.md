@@ -21,6 +21,57 @@ list (QGSP_BIC_HP + elastic HP).
 The simulation reproduces the last row directly: the end-of-run report prints
 the capture counts per element and the Gd capture share.
 
+## Results at a glance
+
+The figures below are selected presentation outputs from the simulation. They
+are tracked separately in [`docs/figures/`](docs/figures/) so the README is
+useful on GitHub without committing the full ROOT files, logs, or scan
+datasets.
+
+### Why gadolinium helps neutron tagging
+
+![Gd capture share comparison](docs/figures/gd_capture_share.png)
+
+This comparison shows the central physics result: in pure water, thermal
+neutrons predominantly capture on hydrogen, while adding 0.1 wt% Gd shifts
+most captures to gadolinium. Gd capture produces a higher-energy gamma cascade
+than the 2.2 MeV hydrogen-capture gamma, making the neutron capture easier to
+identify.
+
+### Capture path length
+
+![Neutron capture path-length comparison](docs/figures/capture_length_comparison.png)
+
+The path length is the accumulated Geant4 neutron track length before the
+`nCapture` step. It is not simply the straight-line distance to the capture
+point: elastic scattering can make the path longer than the 30 cm sphere
+radius. Gd reduces the typical path length because its larger thermal capture
+cross section makes capture more probable after thermalization.
+
+### Scan results
+
+![Gd capture share versus concentration](docs/figures/gd_share_vs_concentration.png)
+
+The concentration scan tests whether the Gd capture fraction increases
+systematically as the Gd mass fraction increases. This is a more informative
+check than a single 0.1 wt% comparison because it shows the trend and the
+region of diminishing returns.
+
+![Gd capture share versus neutron energy](docs/figures/gd_share_vs_energy.png)
+
+The energy scan compares pure water with 0.1 wt% Gd water over several initial
+neutron energies. It shows how the initial fast-neutron energy changes the
+thermalization and capture history before the neutron reaches the thermal
+capture regime.
+
+![Capture time and position distributions](docs/figures/capture_time_position_comparison.png)
+
+The capture-time panels show when captures occur after the neutron is created,
+including an early-time zoom. The capture-radius panel shows where captures
+occur inside the 30 cm absorber. Together, these distributions help check
+whether Gd changes only the capture isotope or also the spatial and temporal
+capture signatures.
+
 ## Requirements
 
 - **Geant4** >= 10.7 (developed against 11.x), built with `ui_all vis_all`
