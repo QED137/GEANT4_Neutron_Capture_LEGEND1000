@@ -10,6 +10,7 @@
 /analysis/h1/set 27 200 0. 10. MeV
 /analysis/h1/set 28 20 0. 20.
 /analysis/h1/set 29 200 0. 10. MeV
+/analysis/h1/set 30 60 0. 1.5
 /gun/particle neutron
 /gun/energy 1 MeV
-/run/beamOn 10000
+/run/beamOn 100
