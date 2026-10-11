@@ -72,6 +72,42 @@ occur inside the 30 cm absorber. Together, these distributions help check
 whether Gd changes only the capture isotope or also the spatial and temporal
 capture signatures.
 
+The extended scan also produces:
+
+- `escape_probability_vs_radius.png`: the fraction of primary neutrons that
+  leave absorbers of different radii without being captured
+- `capture_isotope_breakdown.png`: capture counts by residual nucleus
+- `capture_length_by_isotope.png`: mean capture path length grouped by
+  residual nucleus
+- `detector_response.png`: deposited-energy threshold counts and capture-gamma
+  response for the 2.5 MeV comparison
+- `energy_containment.png`: event-level distribution of deposited energy
+  divided by capture-gamma energy
+- `energy_containment_vs_radius.png`: mean containment proxy versus absorber
+  radius
+
+These outputs distinguish the Gd share *among captures* from the probability
+that an incident neutron is captured at all, identify the isotopes responsible
+for the capture signal, compare path lengths by isotope, and connect the
+nuclear capture process to a detector energy threshold.
+
+### Energy containment
+
+For each capture event, the scan records the total energy deposited in the
+absorber and the capture-step gamma energy. It plots the containment proxy
+
+```text
+deposited energy / capture-gamma energy
+```
+
+A value near 1 means that the deposited energy is comparable to the energy
+released in capture; lower values indicate more energy escaped the absorber.
+The ratio can exceed 1 because the deposited energy also includes energy from
+the incident neutron and other event products, so this is a capture-event
+response proxy rather than a pure gamma-only containment fraction. The
+radius-scan plot shows how this response changes as the detector becomes
+larger.
+
 ## Requirements
 
 - **Geant4** >= 10.7 (developed against 11.x), built with `ui_all vis_all`
