@@ -14,10 +14,10 @@ void HistoManager::Book()
   analysisManager->SetVerboseLevel(1);
   analysisManager->SetActivation(true);
 
-  const G4int kMaxHisto = 27;
+  const G4int kMaxHisto = 31;
   const G4String id[] = { "0",  "1",  "2",  "3",  "4",  "5",  "6",  "7",  "8",  "9",
                           "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",
-                          "20", "21", "22", "23", "24", "25", "26" };
+                          "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30" };
   const G4String title[] = {
     "dummy",                                                          // 0
     "total energy deposit",                                           // 1
@@ -45,7 +45,11 @@ void HistoManager::Book()
     "energy spectrum of all others emerging leptons (neutrinos)",     // 23
     "neutron capture path length",                                    // 24
     "neutron capture time",                                           // 25
-    "neutron capture radius"                                          // 26
+    "neutron capture radius",                                         // 26
+    "capture gamma energy",                                            // 27
+    "capture gamma multiplicity",                                      // 28
+    "event deposited energy",                                          // 29
+    "capture energy containment fraction"                              // 30
   };
 
   G4int nbins = 100;

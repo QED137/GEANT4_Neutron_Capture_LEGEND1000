@@ -9,21 +9,26 @@ from pathlib import Path
 
 CONCENTRATIONS = (0.0, 0.00001, 0.00005, 0.0001, 0.0005, 0.001, 0.002, 0.005, 0.01)
 ENERGIES = ("0.025 eV", "100 eV", "1 keV", "100 keV", "1 MeV", "2.5 MeV", "14.1 MeV")
+RADII_CM = (5, 10, 20, 30, 50, 100)
 
 
-def make_macro(path, gd_fraction, energy, events, output_name):
+def make_macro(path, gd_fraction, energy, events, output_name, radius_cm=30):
     path.write_text(
         "\n".join(
             [
                 "/control/verbose 0",
                 "/run/verbose 0",
-                "/testhadr/det/setRadius 30 cm",
+                f"/testhadr/det/setRadius {radius_cm} cm",
                 f"/testhadr/det/setGdFraction {gd_fraction:.8g}",
                 "/run/initialize",
                 f"/analysis/setFileName {output_name}",
                 "/analysis/h1/set 24 150 0. 300. cm",
                 "/analysis/h1/set 25 200 0. 1000. microsecond",
                 "/analysis/h1/set 26 100 0. 30. cm",
+                "/analysis/h1/set 27 200 0. 10. MeV",
+                "/analysis/h1/set 28 20 0. 20.",
+                "/analysis/h1/set 29 200 0. 10. MeV",
+                "/analysis/h1/set 30 60 0. 1.5",
                 "/gun/particle neutron",
                 f"/gun/energy {energy}",
                 f"/run/beamOn {events}",
@@ -73,6 +78,16 @@ def main():
             make_macro(macro, fraction, energy, args.events, name)
             run_case(args.executable, macro, log)
             rows.append({"scan": "energy", "value": energy, "energy": energy,
+                         "gd_fraction": fraction, "log": log.name})
+
+    for radius in RADII_CM:
+        for fraction, material in ((0.0, "water"), (0.001, "gd")):
+            name = f"radius_{radius}cm_{material}"
+            macro = macros / f"{name}.mac"
+            log = args.output / f"{name}.txt"
+            make_macro(macro, fraction, "2.5 MeV", args.events, name, radius)
+            run_case(args.executable, macro, log)
+            rows.append({"scan": "radius", "value": radius, "energy": "2.5 MeV",
                          "gd_fraction": fraction, "log": log.name})
 
     with (args.output / "cases.csv").open("w", newline="", encoding="utf-8") as stream:

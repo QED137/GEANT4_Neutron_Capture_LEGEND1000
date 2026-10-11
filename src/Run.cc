@@ -8,12 +8,16 @@
 #include "G4SystemOfUnits.hh"
 #include "G4UnitsTable.hh"
 
+#include <string>
+#include <algorithm>
+
 namespace
 {
 constexpr G4double kCaptureLengthMax = 300. * cm;
 constexpr G4double kCaptureLengthBinWidth = kCaptureLengthMax / 150;
 constexpr G4double kCaptureTimeBinWidth = 5. * microsecond;
 constexpr G4double kCaptureRadiusBinWidth = 0.3 * cm;
+constexpr G4double kContainmentBinWidth = 1.5 / 60.;
 }
 
 Run::Run(NeuDetectorConstruction* det) : fDetector(det) {}
@@ -37,7 +41,7 @@ void Run::CountProcesses(const G4VProcess* process)
   }
 }
 
-void Run::CountCapture(G4int Z)
+void Run::CountCapture(G4int Z, G4int A)
 {
   // Z=64: excited Gd-156/158 from nCapture on Gd-155/157
   // Z=1 : deuteron from nCapture on H-1
@@ -47,6 +51,48 @@ void Run::CountCapture(G4int Z)
     fCapH++;
   else
     fCapOther++;
+  G4String isotope = "Z" + std::to_string(Z) + "A" + std::to_string(A);
+  ++fCaptureIsotopes[isotope];
+}
+
+void Run::RecordCaptureLengthByIsotope(const G4String& isotope, G4double length)
+{
+  auto& stats = fCaptureLengthByIsotope[isotope];
+  ++stats.count;
+  stats.sum += length;
+  stats.sum2 += length * length;
+}
+
+void Run::RecordCaptureGamma(G4double energy, G4int multiplicity)
+{
+  if (multiplicity <= 0) return;
+  fEventCaptureGammaEnergy += energy;
+  ++fCaptureGammaEvents;
+  fCaptureGammaCount += multiplicity;
+  fCaptureGammaEnergy += energy;
+  fCaptureGammaEnergy2 += energy * energy;
+}
+
+void Run::ResetEventCaptureGamma()
+{
+  fEventCaptureGammaEnergy = 0.;
+}
+
+void Run::RecordEventEnergyDeposit(G4double energy)
+{
+  if (energy >= 1. * MeV) ++fEventsAbove1MeV;
+  if (energy >= 3. * MeV) ++fEventsAbove3MeV;
+  if (energy >= 5. * MeV) ++fEventsAbove5MeV;
+  if (energy >= 7. * MeV) ++fEventsAbove7MeV;
+  if (fEventCaptureGammaEnergy > 0.) {
+    const G4double containment = energy / fEventCaptureGammaEnergy;
+    G4AnalysisManager::Instance()->FillH1(30, containment);
+    ++fContainmentEvents;
+    fContainmentSum += containment;
+    fContainmentSum2 += containment * containment;
+    const G4int bin = static_cast<G4int>(containment / kContainmentBinWidth);
+    if (bin >= 0 && bin < kContainmentBins) ++fContainmentHistogram[bin];
+  }
 }
 
 void Run::RecordCaptureLength(G4double length)
@@ -118,6 +164,11 @@ void Run::ParticleFlux(G4String name, G4double Ekin)
   }
 }
 
+void Run::CountEscapedPrimaryNeutron()
+{
+  ++fEscapedNeutrons;
+}
+
 void Run::Merge(const G4Run* run)
 {
   const Run* localRun = static_cast<const Run*>(run);
@@ -136,6 +187,28 @@ void Run::Merge(const G4Run* run)
   fCapH += localRun->fCapH;
   fCapGd += localRun->fCapGd;
   fCapOther += localRun->fCapOther;
+  fEscapedNeutrons += localRun->fEscapedNeutrons;
+  fCaptureGammaEvents += localRun->fCaptureGammaEvents;
+  fCaptureGammaCount += localRun->fCaptureGammaCount;
+  fCaptureGammaEnergy += localRun->fCaptureGammaEnergy;
+  fCaptureGammaEnergy2 += localRun->fCaptureGammaEnergy2;
+  fEventsAbove1MeV += localRun->fEventsAbove1MeV;
+  fEventsAbove3MeV += localRun->fEventsAbove3MeV;
+  fEventsAbove5MeV += localRun->fEventsAbove5MeV;
+  fEventsAbove7MeV += localRun->fEventsAbove7MeV;
+  fContainmentEvents += localRun->fContainmentEvents;
+  fContainmentSum += localRun->fContainmentSum;
+  fContainmentSum2 += localRun->fContainmentSum2;
+  for (G4int i = 0; i < kContainmentBins; ++i)
+    fContainmentHistogram[i] += localRun->fContainmentHistogram[i];
+  for (const auto& isotope : localRun->fCaptureIsotopes)
+    fCaptureIsotopes[isotope.first] += isotope.second;
+  for (const auto& isotope : localRun->fCaptureLengthByIsotope) {
+    auto& stats = fCaptureLengthByIsotope[isotope.first];
+    stats.count += isotope.second.count;
+    stats.sum += isotope.second.sum;
+    stats.sum2 += isotope.second.sum2;
+  }
   for (G4int i = 0; i < kCaptureLengthBins; ++i)
     fCaptureLengthHistogram[i] += localRun->fCaptureLengthHistogram[i];
   fCaptureLengthOverflow += localRun->fCaptureLengthOverflow;
@@ -236,6 +309,51 @@ void Run::EndOfRun()
          << "   other = " << fCapOther << "   (total " << nCap << ")"
          << "\n Gd capture share = " << 100. * fCapGd / (nCap > 0 ? nCap : 1) << " %"
          << G4endl;
+  G4cout << " Escaped neutrons = " << fEscapedNeutrons
+         << "   escape probability = "
+         << 100. * fEscapedNeutrons / (numberOfEvent > 0 ? numberOfEvent : 1)
+         << " %" << G4endl;
+
+  G4cout << "\n Capture isotopes :" << G4endl;
+  for (const auto& isotope : fCaptureIsotopes)
+    G4cout << " capture_isotope " << isotope.first << " " << isotope.second << G4endl;
+  G4cout << "\n Capture-length statistics by isotope (cm) :" << G4endl;
+  for (const auto& isotope : fCaptureLengthByIsotope) {
+    const auto& stats = isotope.second;
+    const G4double mean = stats.sum / stats.count;
+    const G4double variance = std::max(0., stats.sum2 / stats.count - mean * mean);
+    G4cout << " capture_length_stats " << isotope.first << " " << stats.count << " "
+           << mean / cm << " " << std::sqrt(variance) / cm << G4endl;
+  }
+
+  if (fCaptureGammaEvents > 0) {
+    const G4double meanGammaEnergy = fCaptureGammaEnergy / fCaptureGammaEvents;
+    const G4double meanGammaMultiplicity =
+      static_cast<G4double>(fCaptureGammaCount) / fCaptureGammaEvents;
+    G4cout << "\n Capture gamma summary: events = " << fCaptureGammaEvents
+           << " mean_energy = " << G4BestUnit(meanGammaEnergy, "Energy")
+           << " mean_multiplicity = " << meanGammaMultiplicity << G4endl;
+  }
+  if (fContainmentEvents > 0) {
+    const G4double mean = fContainmentSum / fContainmentEvents;
+    const G4double variance =
+      std::max(0., fContainmentSum2 / fContainmentEvents - mean * mean);
+    G4cout << "\n Capture energy containment summary: events = " << fContainmentEvents
+           << " mean_fraction = " << mean
+           << " rms = " << std::sqrt(variance) << G4endl;
+  }
+  G4cout << "\n Capture energy containment histogram:" << G4endl;
+  for (G4int i = 0; i < kContainmentBins; ++i) {
+    if (fContainmentHistogram[i] == 0) continue;
+    G4cout << " containment_bin " << i * kContainmentBinWidth << " "
+           << (i + 1) * kContainmentBinWidth << " "
+           << fContainmentHistogram[i] << G4endl;
+  }
+  G4cout << "\n Deposited-energy thresholds per event :" << G4endl
+         << " edep_threshold 1 MeV " << fEventsAbove1MeV << G4endl
+         << " edep_threshold 3 MeV " << fEventsAbove3MeV << G4endl
+         << " edep_threshold 5 MeV " << fEventsAbove5MeV << G4endl
+         << " edep_threshold 7 MeV " << fEventsAbove7MeV << G4endl;
 
   G4cout << "\n Capture length histogram (cm):" << G4endl;
   for (G4int i = 0; i < kCaptureLengthBins; ++i) {

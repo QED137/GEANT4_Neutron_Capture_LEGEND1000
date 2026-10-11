@@ -14,6 +14,8 @@ void NeuEventAction::BeginOfEventAction(const G4Event*)
 {
   fTotalEnergyDeposit = 0.;
   fTotalEnergyFlow = 0.;
+  auto* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
+  run->ResetEventCaptureGamma();
 }
 
 void NeuEventAction::AddEdep(G4double Edep) { fTotalEnergyDeposit += Edep; }
@@ -25,8 +27,10 @@ void NeuEventAction::EndOfEventAction(const G4Event*)
 
   G4double totalEnergy = fTotalEnergyDeposit + fTotalEnergyFlow;
   run->SumEnergies(fTotalEnergyDeposit, fTotalEnergyFlow, totalEnergy);
+  run->RecordEventEnergyDeposit(fTotalEnergyDeposit);
 
   G4AnalysisManager::Instance()->FillH1(1, fTotalEnergyDeposit);
+  G4AnalysisManager::Instance()->FillH1(29, fTotalEnergyDeposit);
   G4AnalysisManager::Instance()->FillH1(3, fTotalEnergyFlow);
   G4AnalysisManager::Instance()->FillH1(0, totalEnergy);
 }

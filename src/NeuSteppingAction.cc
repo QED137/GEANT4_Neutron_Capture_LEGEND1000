@@ -28,13 +28,30 @@ void NeuSteppingAction::UserSteppingAction(const G4Step* aStep)
     G4AnalysisManager::Instance()->FillH1(25, aStep->GetTrack()->GetGlobalTime());
     G4AnalysisManager::Instance()->FillH1(26, aStep->GetPostStepPoint()->GetPosition().mag());
     G4int Z = 0;
+    G4int A = 0;
+    G4double gammaEnergy = 0.;
+    G4int gammaMultiplicity = 0;
     if (const auto* secs = aStep->GetSecondary()) {
       for (const auto* sec : *secs) {
-        if (sec->GetDefinition()->GetParticleType() == "nucleus")
+        const auto* definition = sec->GetDefinition();
+        if (definition->GetParticleType() == "nucleus") {
           Z = sec->GetDefinition()->GetAtomicNumber();
+          A = sec->GetDefinition()->GetAtomicMass();
+        }
+        if (definition->GetParticleName() == "gamma") {
+          gammaEnergy += sec->GetKineticEnergy();
+          ++gammaMultiplicity;
+        }
       }
     }
-    run->CountCapture(Z);
+    const G4String isotope = "Z" + std::to_string(Z) + "A" + std::to_string(A);
+    run->CountCapture(Z, A);
+    run->RecordCaptureLengthByIsotope(isotope, captureLength);
+    run->RecordCaptureGamma(gammaEnergy, gammaMultiplicity);
+    if (gammaMultiplicity > 0) {
+      G4AnalysisManager::Instance()->FillH1(27, gammaEnergy);
+      G4AnalysisManager::Instance()->FillH1(28, gammaMultiplicity);
+    }
   }
 
   // energy deposit

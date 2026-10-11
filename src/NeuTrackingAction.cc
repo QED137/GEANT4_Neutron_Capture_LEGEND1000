@@ -76,6 +76,8 @@ void NeuTrackingAction::PostUserTrackingAction(const G4Track* track)
   fEventAction->AddEflow(energy);
 
   Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
+  if (track->GetTrackID() == 1 && particle == G4Neutron::Neutron())
+    run->CountEscapedPrimaryNeutron();
   run->ParticleFlux(name, energy);
 
   // histograms: energy at exit

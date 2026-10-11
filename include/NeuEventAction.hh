@@ -15,6 +15,7 @@ public:
 
   void AddEdep(G4double);
   void AddEflow(G4double);
+  G4double GetTotalEnergyDeposit() const { return fTotalEnergyDeposit; }
 
 private:
   G4double fTotalEnergyDeposit = 0.;
