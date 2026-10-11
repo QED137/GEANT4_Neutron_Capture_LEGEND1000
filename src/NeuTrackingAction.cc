@@ -2,6 +2,7 @@
 #include "NeuEventAction.hh"
 #include "Run.hh"
 #include "HistoManager.hh"
+#include "TrackingMessenger.hh"
 
 #include "G4AnalysisManager.hh"
 #include "G4ParticleTypes.hh"
@@ -11,8 +12,15 @@
 #include "G4Track.hh"
 #include "G4UnitsTable.hh"
 
-NeuTrackingAction::NeuTrackingAction(NeuEventAction* event) : fEventAction(event) {}
-NeuTrackingAction::~NeuTrackingAction() {}
+NeuTrackingAction::NeuTrackingAction(NeuEventAction* event) : fEventAction(event)
+{
+  fTrackMessenger = new TrackingMessenger(this);
+}
+
+NeuTrackingAction::~NeuTrackingAction()
+{
+  delete fTrackMessenger;
+}
 
 void NeuTrackingAction::PreUserTrackingAction(const G4Track* track)
 {
@@ -25,7 +33,7 @@ void NeuTrackingAction::PreUserTrackingAction(const G4Track* track)
   G4String name = particle->GetParticleName();
   G4double meanLife = particle->GetPDGLifeTime();
   G4double energy = track->GetKineticEnergy();
-  run->ParticleCount(name, energy, meanLife);
+  if (fParticleCount) run->ParticleCount(name, energy, meanLife);
 
   // histograms: energy at creation
   G4AnalysisManager* analysis = G4AnalysisManager::Instance();
@@ -58,6 +66,12 @@ void NeuTrackingAction::PreUserTrackingAction(const G4Track* track)
   else if (type == "lepton")
     ih = 13;
   if (ih > 0) analysis->FillH1(ih, energy);
+
+  if (fKillNeutron && particle == G4Neutron::Neutron()) {
+    fEventAction->AddEdep(energy);
+    auto* mutableTrack = const_cast<G4Track*>(track);
+    mutableTrack->SetTrackStatus(fStopAndKill);
+  }
 }
 
 void NeuTrackingAction::PostUserTrackingAction(const G4Track* track)
