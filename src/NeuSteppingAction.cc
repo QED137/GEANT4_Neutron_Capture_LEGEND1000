@@ -21,6 +21,17 @@ void NeuSteppingAction::UserSteppingAction(const G4Step* aStep)
   const G4VProcess* process = endPoint->GetProcessDefinedStep();
   Run* run = static_cast<Run*>(G4RunManager::GetRunManager()->GetNonConstCurrentRun());
   run->CountProcesses(process);
+  const auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
+  if (event && event->GetEventID() != fThermalizationEventId) {
+    fThermalizationPathByTrack.clear();
+    fThermalizationEventId = event->GetEventID();
+  }
+  const auto* track = aStep->GetTrack();
+  if (track->GetDefinition()->GetParticleName() == "neutron" &&
+      track->GetKineticEnergy() <= 1. * eV &&
+      fThermalizationPathByTrack.find(track->GetTrackID()) == fThermalizationPathByTrack.end()) {
+    fThermalizationPathByTrack[track->GetTrackID()] = track->GetTrackLength();
+  }
 
   // count neutron captures by target element:
   // the residual nucleus (Z=64 excited Gd, Z=1 deuteron, ...) is a secondary of the step
@@ -59,23 +70,31 @@ void NeuSteppingAction::UserSteppingAction(const G4Step* aStep)
       logicalVolume && logicalVolume->GetMaterial()
         ? logicalVolume->GetMaterial()->GetName()
         : "Unknown";
-    const auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
+    const auto thermalization = fThermalizationPathByTrack.find(track->GetTrackID());
+    const G4double thermalizationPath =
+      thermalization == fThermalizationPathByTrack.end()
+        ? -1.
+        : thermalization->second;
     auto* analysis = G4AnalysisManager::Instance();
-    analysis->FillNtupleIColumn(0, event ? event->GetEventID() : -1);
-    analysis->FillNtupleSColumn(1, volume ? volume->GetName() : "Unknown");
-    analysis->FillNtupleSColumn(2, materialName);
-    analysis->FillNtupleIColumn(3, Z);
-    analysis->FillNtupleIColumn(4, A);
-    analysis->FillNtupleDColumn(5, position.x() / cm);
-    analysis->FillNtupleDColumn(6, position.y() / cm);
-    analysis->FillNtupleDColumn(7, position.z() / cm);
-    analysis->FillNtupleDColumn(8, position.mag() / cm);
-    analysis->FillNtupleDColumn(9, aStep->GetTrack()->GetGlobalTime() / microsecond);
-    analysis->FillNtupleDColumn(10, captureLength / cm);
-    analysis->FillNtupleDColumn(11, gammaEnergy / MeV);
-    analysis->FillNtupleIColumn(12, gammaMultiplicity);
-    analysis->AddNtupleRow();
-
+    if (analysis->GetNofNtuples() == 0) {
+      G4Exception("NeuSteppingAction::UserSteppingAction", "MissingCaptureNtuple",
+                  FatalException, "The capture ntuple is not available in this worker.");
+    }
+    analysis->FillNtupleIColumn(0, 0, event ? event->GetEventID() : -1);
+    analysis->FillNtupleSColumn(0, 1, volume ? volume->GetName() : "Unknown");
+    analysis->FillNtupleSColumn(0, 2, materialName);
+    analysis->FillNtupleIColumn(0, 3, Z);
+    analysis->FillNtupleIColumn(0, 4, A);
+    analysis->FillNtupleDColumn(0, 5, position.x() / cm);
+    analysis->FillNtupleDColumn(0, 6, position.y() / cm);
+    analysis->FillNtupleDColumn(0, 7, position.z() / cm);
+    analysis->FillNtupleDColumn(0, 8, position.mag() / cm);
+    analysis->FillNtupleDColumn(0, 9, aStep->GetTrack()->GetGlobalTime() / microsecond);
+    analysis->FillNtupleDColumn(0, 10, captureLength / cm);
+    analysis->FillNtupleDColumn(0, 11, gammaEnergy / MeV);
+    analysis->FillNtupleIColumn(0, 12, gammaMultiplicity);
+    analysis->FillNtupleDColumn(0, 13, thermalizationPath / cm);
+    analysis->AddNtupleRow(0);
     const G4String isotope = "Z" + std::to_string(Z) + "A" + std::to_string(A);
     run->CountCapture(Z, A);
     run->RecordCaptureLengthByIsotope(isotope, captureLength);

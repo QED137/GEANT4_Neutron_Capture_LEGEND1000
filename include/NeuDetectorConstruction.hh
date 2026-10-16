@@ -24,6 +24,12 @@ public:
   void SetTankHeight(G4double);
   void SetCryostatRadius(G4double);
   void SetCryostatHeight(G4double);
+  void SetPlateMaterial(G4String);
+  void SetPlateDistance(G4double);
+  void SetPlateWidth(G4double);
+  void SetPlateHeight(G4double);
+  void SetPlateThickness(G4double);
+  void SetPlateEnabled(G4bool);
   void SetMaterial(G4String);
   void SetGdFraction(G4double);
 
@@ -49,6 +55,12 @@ private:
   G4Material* fWorldMat = nullptr;
   G4Material* fSteel = nullptr;
   G4Material* fLiquidArgon = nullptr;
+  G4Material* fPlateMaterial = nullptr;
+  G4double fPlateDistance = 50. * cm;
+  G4double fPlateWidth = 4. * m;
+  G4double fPlateHeight = 4. * m;
+  G4double fPlateThickness = 2. * cm;
+  G4bool fPlateEnabled = false;
   G4Element* fHydrogen = nullptr;
   G4Element* fOxygen = nullptr;
   G4VPhysicalVolume* fPWorld = nullptr;

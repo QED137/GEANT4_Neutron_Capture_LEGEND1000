@@ -28,6 +28,12 @@ private:
   G4UIcmdWithADoubleAndUnit* fTankHeightCmd = nullptr;
   G4UIcmdWithADoubleAndUnit* fCryostatRadiusCmd = nullptr;
   G4UIcmdWithADoubleAndUnit* fCryostatHeightCmd = nullptr;
+  G4UIcmdWithAString* fPlateMaterialCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fPlateDistanceCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fPlateWidthCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fPlateHeightCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fPlateThicknessCmd = nullptr;
+  G4UIcmdWithAString* fPlateEnabledCmd = nullptr;
   G4UIcmdWithADouble* fGdFractionCmd = nullptr;
   G4UIcommand* fIsotopeCmd = nullptr;
 };

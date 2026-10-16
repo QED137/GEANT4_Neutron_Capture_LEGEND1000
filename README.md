@@ -283,7 +283,51 @@ doped run; the "particles at creation" table in the log lists them by name.
   `Run::CountCapture`; the end-of-run report splits captures into H / Gd /
   other and prints the Gd share. The same step is saved to the `capture`
   ROOT ntuple with event ID, volume, material, target isotope, position,
-  radius, time, path length, and capture-gamma information.
+  radius, time, path length, capture-gamma information, and the neutron path
+  length when it first reaches 1 eV or less (the thermalization path).
+
+### Finite gadolinium plate study
+
+The plate model is disabled by default, so the water and Gd-water baseline
+macros are unchanged. `macros/run_plate_gd.mac` enables a finite natural-Gd
+rectangular slab in pure water:
+
+- width: 4 m in `y`
+- height: 4 m in `z`
+- thickness: 2 cm in `x`
+- location: +x side of the cryostat
+- distance: 2 m from the cryostat outer surface
+
+Run it with:
+
+```bash
+./build/neu macros/run_plate_gd.mac
+```
+
+The plate distance is measured from the outer cryostat radius. For the default
+1.5 m cryostat radius and 2 m distance, the plate center is at 3.51 m from the
+detector axis. A distance scan can be made by changing:
+
+```text
+/testhadr/det/setPlateDistance 0 cm
+```
+
+The supported plate materials are Geant4 material names, including:
+`Gd` (natural gadolinium), `G4_STAINLESS-STEEL`, `G4_Pb`, and `Water_ts`.
+Change `/testhadr/det/setPlateMaterial` to compare neutron capture in those
+materials while keeping the geometry fixed.
+
+The `capture` ntuple identifies plate captures with `volume == "GdPlate"` and
+contains `thermalization_path_cm`. For a fair comparison, report all three:
+
+1. plate capture probability per incident neutron;
+2. plate capture share among all captures;
+3. tagging efficiency, defined separately using the chosen gamma-energy or
+   detector-containment threshold.
+
+The thermalization path is a transport diagnostic, not automatically a
+detector-tagging efficiency. Captures with `thermalization_path_cm == -1`
+did not reach the 1 eV threshold before capture.
 
 ## Output
 

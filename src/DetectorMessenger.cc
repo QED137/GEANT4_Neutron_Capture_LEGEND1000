@@ -57,6 +57,44 @@ DetectorMessenger::DetectorMessenger(NeuDetectorConstruction* Det) : fDetector(D
   fCryostatHeightCmd->SetUnitCategory("Length");
   fCryostatHeightCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
+  fPlateMaterialCmd = new G4UIcmdWithAString("/testhadr/det/setPlateMaterial", this);
+  fPlateMaterialCmd->SetGuidance("Set plate material: Gd, Water_ts, G4_STAINLESS-STEEL, or G4_Pb.");
+  fPlateMaterialCmd->SetParameterName("material", false);
+  fPlateMaterialCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fPlateDistanceCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setPlateDistance", this);
+  fPlateDistanceCmd->SetGuidance("Set plate distance from the cryostat outer surface.");
+  fPlateDistanceCmd->SetParameterName("distance", false);
+  fPlateDistanceCmd->SetRange("distance>=0.");
+  fPlateDistanceCmd->SetUnitCategory("Length");
+  fPlateDistanceCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fPlateWidthCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setPlateWidth", this);
+  fPlateWidthCmd->SetGuidance("Set rectangular plate width.");
+  fPlateWidthCmd->SetParameterName("width", false);
+  fPlateWidthCmd->SetRange("width>0.");
+  fPlateWidthCmd->SetUnitCategory("Length");
+  fPlateWidthCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fPlateHeightCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setPlateHeight", this);
+  fPlateHeightCmd->SetGuidance("Set rectangular plate height.");
+  fPlateHeightCmd->SetParameterName("height", false);
+  fPlateHeightCmd->SetRange("height>0.");
+  fPlateHeightCmd->SetUnitCategory("Length");
+  fPlateHeightCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fPlateThicknessCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setPlateThickness", this);
+  fPlateThicknessCmd->SetGuidance("Set rectangular plate thickness.");
+  fPlateThicknessCmd->SetParameterName("thickness", false);
+  fPlateThicknessCmd->SetRange("thickness>0.");
+  fPlateThicknessCmd->SetUnitCategory("Length");
+  fPlateThicknessCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fPlateEnabledCmd = new G4UIcmdWithAString("/testhadr/det/setPlateEnabled", this);
+  fPlateEnabledCmd->SetGuidance("Enable or disable the rectangular plate: true or false.");
+  fPlateEnabledCmd->SetParameterName("enabled", false);
+  fPlateEnabledCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
   fGdFractionCmd = new G4UIcmdWithADouble("/testhadr/det/setGdFraction", this);
   fGdFractionCmd->SetGuidance("Set natural Gd mass fraction in water (0 to 1).");
   fGdFractionCmd->SetParameterName("fraction", false);
@@ -103,6 +141,12 @@ DetectorMessenger::~DetectorMessenger()
   delete fTankHeightCmd;
   delete fCryostatRadiusCmd;
   delete fCryostatHeightCmd;
+  delete fPlateMaterialCmd;
+  delete fPlateDistanceCmd;
+  delete fPlateWidthCmd;
+  delete fPlateHeightCmd;
+  delete fPlateThicknessCmd;
+  delete fPlateEnabledCmd;
   delete fGdFractionCmd;
   delete fIsotopeCmd;
   delete fDetDir;
@@ -129,6 +173,17 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
   if (command == fCryostatHeightCmd) {
     fDetector->SetCryostatHeight(fCryostatHeightCmd->GetNewDoubleValue(newValue));
   }
+  if (command == fPlateMaterialCmd) fDetector->SetPlateMaterial(newValue);
+  if (command == fPlateDistanceCmd)
+    fDetector->SetPlateDistance(fPlateDistanceCmd->GetNewDoubleValue(newValue));
+  if (command == fPlateWidthCmd)
+    fDetector->SetPlateWidth(fPlateWidthCmd->GetNewDoubleValue(newValue));
+  if (command == fPlateHeightCmd)
+    fDetector->SetPlateHeight(fPlateHeightCmd->GetNewDoubleValue(newValue));
+  if (command == fPlateThicknessCmd)
+    fDetector->SetPlateThickness(fPlateThicknessCmd->GetNewDoubleValue(newValue));
+  if (command == fPlateEnabledCmd)
+    fDetector->SetPlateEnabled(newValue == "true" || newValue == "1");
   if (command == fGdFractionCmd) {
     fDetector->SetGdFraction(fGdFractionCmd->GetNewDoubleValue(newValue));
   }

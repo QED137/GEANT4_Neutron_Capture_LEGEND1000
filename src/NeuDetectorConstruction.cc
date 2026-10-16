@@ -60,6 +60,12 @@ void NeuDetectorConstruction::DefineMaterials()
     fLiquidArgon = G4NistManager::Instance()->FindOrBuildMaterial("G4_Ar");
 
   DefineGdMaterial(0.001);
+  fPlateMaterial = G4NistManager::Instance()->FindOrBuildMaterial("G4_Gd");
+  if (!fPlateMaterial) {
+    fPlateMaterial = new G4Material("NaturalGadolinium", 7.90 * g / cm3, 1);
+    fPlateMaterial->AddElement(new G4Element("NaturalGadoliniumElement", "Gd",
+                                             64., 157.25 * g / mole), 1);
+  }
 
   // heavy water
   G4Isotope* H2 = new G4Isotope("H2", 1, 2);
@@ -145,6 +151,22 @@ G4VPhysicalVolume* NeuDetectorConstruction::ConstructVolumes()
   new G4PVPlacement(0, G4ThreeVector(), lCryostatLAr, "CryostatLAr",
                     lCryostat, false, 0);
 
+  if (fPlateEnabled) {
+    const G4double plateX = fCryostatRadius + fPlateDistance + 0.5 * fPlateThickness;
+    if (plateX + 0.5 * fPlateThickness > fTankRadius) {
+      G4Exception("NeuDetectorConstruction::ConstructVolumes", "PlateOutsideTank",
+                  JustWarning, "Gd plate extends outside the water tank and will not be placed.");
+    }
+    else {
+      G4Box* sPlate = new G4Box("GdPlate", 0.5 * fPlateThickness,
+                                0.5 * fPlateWidth, 0.5 * fPlateHeight);
+      G4LogicalVolume* lPlate =
+        new G4LogicalVolume(sPlate, fPlateMaterial, "GdPlate");
+      new G4PVPlacement(0, G4ThreeVector(plateX, 0., 0.), lPlate, "GdPlate",
+                        fLAbsor, false, 0, true);
+    }
+  }
+
   PrintParameters();
   return fPWorld;
 }
@@ -156,6 +178,13 @@ void NeuDetectorConstruction::PrintParameters()
          << fMaterial->GetName() << "\n The cryostat is "
          << G4BestUnit(fCryostatRadius, "Length") << " radius x "
          << G4BestUnit(fCryostatHeight, "Length") << " height\n\n"
+         << " Plate: " << (fPlateEnabled ? "enabled" : "disabled")
+         << ", material " << (fPlateMaterial ? fPlateMaterial->GetName() : "none")
+         << ", distance " << G4BestUnit(fPlateDistance, "Length")
+         << ", width x height x thickness "
+         << G4BestUnit(fPlateWidth, "Length") << " x "
+         << G4BestUnit(fPlateHeight, "Length") << " x "
+         << G4BestUnit(fPlateThickness, "Length") << "\n\n"
          << fMaterial << G4endl;
 }
 
@@ -219,4 +248,39 @@ void NeuDetectorConstruction::SetCryostatHeight(G4double value)
 {
   fCryostatHeight = value;
   G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
+
+void NeuDetectorConstruction::SetPlateMaterial(G4String material)
+{
+  if (material == "Gd" || material == "NaturalGadolinium") fPlateMaterial =
+    G4NistManager::Instance()->FindOrBuildMaterial("G4_Gd");
+  else fPlateMaterial = G4NistManager::Instance()->FindOrBuildMaterial(material);
+  if (!fPlateMaterial)
+    G4Exception("NeuDetectorConstruction::SetPlateMaterial", "UnknownPlateMaterial",
+                FatalException, ("Unknown plate material: " + material).c_str());
+}
+
+void NeuDetectorConstruction::SetPlateDistance(G4double value)
+{
+  fPlateDistance = value;
+}
+
+void NeuDetectorConstruction::SetPlateWidth(G4double value)
+{
+  fPlateWidth = value;
+}
+
+void NeuDetectorConstruction::SetPlateHeight(G4double value)
+{
+  fPlateHeight = value;
+}
+
+void NeuDetectorConstruction::SetPlateThickness(G4double value)
+{
+  fPlateThickness = value;
+}
+
+void NeuDetectorConstruction::SetPlateEnabled(G4bool enabled)
+{
+  fPlateEnabled = enabled;
 }

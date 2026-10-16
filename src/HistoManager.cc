@@ -75,5 +75,6 @@ void HistoManager::Book()
   analysisManager->CreateNtupleDColumn("path_length_cm");
   analysisManager->CreateNtupleDColumn("gamma_energy_mev");
   analysisManager->CreateNtupleIColumn("gamma_multiplicity");
+  analysisManager->CreateNtupleDColumn("thermalization_path_cm");
   analysisManager->FinishNtuple();
 }
