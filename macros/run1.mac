@@ -7,7 +7,8 @@
 /run/verbose 2
 #
 /testhadr/det/setMat Water_ts
-/testhadr/det/setRadius 30 cm
+/testhadr/det/setTankRadius 5 m
+/testhadr/det/setTankHeight 9 m
 #
 /run/initialize
 #

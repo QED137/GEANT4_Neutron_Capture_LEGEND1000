@@ -29,6 +29,34 @@ DetectorMessenger::DetectorMessenger(NeuDetectorConstruction* Det) : fDetector(D
   fSizeCmd->SetUnitCategory("Length");
   fSizeCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
 
+  fTankRadiusCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setTankRadius", this);
+  fTankRadiusCmd->SetGuidance("Set cylindrical water-tank radius.");
+  fTankRadiusCmd->SetParameterName("radius", false);
+  fTankRadiusCmd->SetRange("radius>0.");
+  fTankRadiusCmd->SetUnitCategory("Length");
+  fTankRadiusCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fTankHeightCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setTankHeight", this);
+  fTankHeightCmd->SetGuidance("Set cylindrical water-tank height.");
+  fTankHeightCmd->SetParameterName("height", false);
+  fTankHeightCmd->SetRange("height>0.");
+  fTankHeightCmd->SetUnitCategory("Length");
+  fTankHeightCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fCryostatRadiusCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setCryostatRadius", this);
+  fCryostatRadiusCmd->SetGuidance("Set central cryostat outer radius.");
+  fCryostatRadiusCmd->SetParameterName("radius", false);
+  fCryostatRadiusCmd->SetRange("radius>0.");
+  fCryostatRadiusCmd->SetUnitCategory("Length");
+  fCryostatRadiusCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
+  fCryostatHeightCmd = new G4UIcmdWithADoubleAndUnit("/testhadr/det/setCryostatHeight", this);
+  fCryostatHeightCmd->SetGuidance("Set central cryostat height.");
+  fCryostatHeightCmd->SetParameterName("height", false);
+  fCryostatHeightCmd->SetRange("height>0.");
+  fCryostatHeightCmd->SetUnitCategory("Length");
+  fCryostatHeightCmd->AvailableForStates(G4State_PreInit, G4State_Idle);
+
   fGdFractionCmd = new G4UIcmdWithADouble("/testhadr/det/setGdFraction", this);
   fGdFractionCmd->SetGuidance("Set natural Gd mass fraction in water (0 to 1).");
   fGdFractionCmd->SetParameterName("fraction", false);
@@ -71,6 +99,10 @@ DetectorMessenger::~DetectorMessenger()
 {
   delete fMaterCmd;
   delete fSizeCmd;
+  delete fTankRadiusCmd;
+  delete fTankHeightCmd;
+  delete fCryostatRadiusCmd;
+  delete fCryostatHeightCmd;
   delete fGdFractionCmd;
   delete fIsotopeCmd;
   delete fDetDir;
@@ -84,6 +116,18 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command, G4String newValue)
   }
   if (command == fSizeCmd) {
     fDetector->SetRadius(fSizeCmd->GetNewDoubleValue(newValue));
+  }
+  if (command == fTankRadiusCmd) {
+    fDetector->SetTankRadius(fTankRadiusCmd->GetNewDoubleValue(newValue));
+  }
+  if (command == fTankHeightCmd) {
+    fDetector->SetTankHeight(fTankHeightCmd->GetNewDoubleValue(newValue));
+  }
+  if (command == fCryostatRadiusCmd) {
+    fDetector->SetCryostatRadius(fCryostatRadiusCmd->GetNewDoubleValue(newValue));
+  }
+  if (command == fCryostatHeightCmd) {
+    fDetector->SetCryostatHeight(fCryostatHeightCmd->GetNewDoubleValue(newValue));
   }
   if (command == fGdFractionCmd) {
     fDetector->SetGdFraction(fGdFractionCmd->GetNewDoubleValue(newValue));

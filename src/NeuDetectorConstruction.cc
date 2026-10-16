@@ -15,9 +15,12 @@
 #include "G4RunManager.hh"
 #include "G4SolidStore.hh"
 #include "G4Sphere.hh"
+#include "G4Tubs.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4UIcommand.hh"
 #include "G4UnitsTable.hh"
+
+#include <algorithm>
 
 NeuDetectorConstruction::NeuDetectorConstruction()
 {
@@ -50,6 +53,11 @@ void NeuDetectorConstruction::DefineMaterials()
   H2O->AddElement(H, natoms = 2);
   H2O->AddElement(O, natoms = 1);
   H2O->GetIonisation()->SetMeanExcitationEnergy(78.0 * eV);
+
+  fSteel = G4NistManager::Instance()->FindOrBuildMaterial("G4_STAINLESS-STEEL");
+  fLiquidArgon = G4NistManager::Instance()->FindOrBuildMaterial("G4_lAr");
+  if (!fLiquidArgon)
+    fLiquidArgon = G4NistManager::Instance()->FindOrBuildMaterial("G4_Ar");
 
   DefineGdMaterial(0.001);
 
@@ -117,10 +125,25 @@ G4VPhysicalVolume* NeuDetectorConstruction::ConstructVolumes()
   G4LogicalVolume* lWorld = new G4LogicalVolume(sWorld, fWorldMat, "World");
   fPWorld = new G4PVPlacement(0, G4ThreeVector(), lWorld, "World", 0, false, 0);
 
-  // absorber: full sphere of fRadius (default 30 cm) of the selected material
-  G4Sphere* sAbsor = new G4Sphere("Absorber", 0., fRadius, 0., twopi, 0., pi);
+  // Simplified GERDA-like water tank. The selected material is applied only
+  // to the water volume; the cryostat remains stainless steel/LAr.
+  G4Tubs* sAbsor = new G4Tubs("WaterTank", 0., fTankRadius, 0.5 * fTankHeight,
+                              0., twopi);
   fLAbsor = new G4LogicalVolume(sAbsor, fMaterial, fMaterial->GetName());
   new G4PVPlacement(0, G4ThreeVector(), fLAbsor, fMaterial->GetName(), lWorld, false, 0);
+
+  const G4double cryostatWall = 1. * cm;
+  G4Tubs* sCryostat = new G4Tubs("Cryostat", 0., fCryostatRadius,
+                                 0.5 * fCryostatHeight, 0., twopi);
+  G4LogicalVolume* lCryostat = new G4LogicalVolume(sCryostat, fSteel, "Cryostat");
+  new G4PVPlacement(0, G4ThreeVector(), lCryostat, "Cryostat", fLAbsor, false, 0);
+
+  G4Tubs* sCryostatLAr = new G4Tubs("CryostatLAr", 0., fCryostatRadius - cryostatWall,
+                                    0.5 * fCryostatHeight - cryostatWall, 0., twopi);
+  G4LogicalVolume* lCryostatLAr =
+    new G4LogicalVolume(sCryostatLAr, fLiquidArgon, "CryostatLAr");
+  new G4PVPlacement(0, G4ThreeVector(), lCryostatLAr, "CryostatLAr",
+                    lCryostat, false, 0);
 
   PrintParameters();
   return fPWorld;
@@ -128,8 +151,12 @@ G4VPhysicalVolume* NeuDetectorConstruction::ConstructVolumes()
 
 void NeuDetectorConstruction::PrintParameters()
 {
-  G4cout << "\n The Absorber is " << G4BestUnit(fRadius, "Length") << " of "
-         << fMaterial->GetName() << "\n \n" << fMaterial << G4endl;
+  G4cout << "\n The water tank is " << G4BestUnit(fTankRadius, "Length")
+         << " radius x " << G4BestUnit(fTankHeight, "Length") << " height of "
+         << fMaterial->GetName() << "\n The cryostat is "
+         << G4BestUnit(fCryostatRadius, "Length") << " radius x "
+         << G4BestUnit(fCryostatHeight, "Length") << " height\n\n"
+         << fMaterial << G4endl;
 }
 
 void NeuDetectorConstruction::SetMaterial(G4String materialChoice)
@@ -164,7 +191,32 @@ void NeuDetectorConstruction::SetGdFraction(G4double fraction)
 
 void NeuDetectorConstruction::SetRadius(G4double value)
 {
+  SetTankRadius(value);
+}
+
+void NeuDetectorConstruction::SetTankRadius(G4double value)
+{
+  fTankRadius = value;
   fRadius = value;
-  fWorldSize = 1.1 * fRadius;
+  fWorldSize = 1.1 * std::max(fTankRadius, 0.5 * fTankHeight);
+  G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
+
+void NeuDetectorConstruction::SetTankHeight(G4double value)
+{
+  fTankHeight = value;
+  fWorldSize = 1.1 * std::max(fTankRadius, 0.5 * fTankHeight);
+  G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
+
+void NeuDetectorConstruction::SetCryostatRadius(G4double value)
+{
+  fCryostatRadius = value;
+  G4RunManager::GetRunManager()->ReinitializeGeometry();
+}
+
+void NeuDetectorConstruction::SetCryostatHeight(G4double value)
+{
+  fCryostatHeight = value;
   G4RunManager::GetRunManager()->ReinitializeGeometry();
 }

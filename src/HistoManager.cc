@@ -60,4 +60,20 @@ void HistoManager::Book()
     G4int ih = analysisManager->CreateH1(id[k], title[k], nbins, vmin, vmax);
     analysisManager->SetH1Activation(ih, false);
   }
+
+  analysisManager->CreateNtuple("capture", "One row per neutron capture");
+  analysisManager->CreateNtupleIColumn("event_id");
+  analysisManager->CreateNtupleSColumn("volume");
+  analysisManager->CreateNtupleSColumn("material");
+  analysisManager->CreateNtupleIColumn("target_z");
+  analysisManager->CreateNtupleIColumn("target_a");
+  analysisManager->CreateNtupleDColumn("x_cm");
+  analysisManager->CreateNtupleDColumn("y_cm");
+  analysisManager->CreateNtupleDColumn("z_cm");
+  analysisManager->CreateNtupleDColumn("radius_cm");
+  analysisManager->CreateNtupleDColumn("time_us");
+  analysisManager->CreateNtupleDColumn("path_length_cm");
+  analysisManager->CreateNtupleDColumn("gamma_energy_mev");
+  analysisManager->CreateNtupleIColumn("gamma_multiplicity");
+  analysisManager->FinishNtuple();
 }

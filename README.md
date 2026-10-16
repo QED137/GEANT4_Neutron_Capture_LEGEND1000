@@ -5,10 +5,11 @@ demonstrate that doping water with **0.1% gadolinium by mass raises the fraction
 of neutron captures occurring on Gd to ~90%** — the basis of neutron tagging in
 large water Cherenkov neutron vetoes.
 
-The geometry and physics follow the original LEGEND-1000 study setup:
-a 30 cm-radius spherical water absorber, pressurized water (593 K, 150 bar)
-with thermal-scattering hydrogen (`TS_H_of_Water`), and a modular HP physics
-list (QGSP_BIC_HP + elastic HP).
+The geometry is a simplified GERDA-like setup: a 10 m diameter x 9 m high
+cylindrical water tank containing a central stainless-steel cryostat and liquid
+argon inner volume. The water uses pressurized water (593 K, 150 bar) with
+thermal-scattering hydrogen (`TS_H_of_Water`) and a modular HP physics list
+(QGSP_BIC_HP + elastic HP).
 
 ## Physics claim
 
@@ -195,7 +196,10 @@ Key macro commands:
 ```
 /testhadr/det/setMat WaterGd_ts   # absorber material (Water_ts, HeavyWater,
                                   # graphite, NE213, or any NIST / isotope name)
-/testhadr/det/setRadius 30 cm     # sphere radius
+/testhadr/det/setTankRadius 5 m   # cylindrical water-tank radius
+/testhadr/det/setTankHeight 9 m   # cylindrical water-tank height
+/testhadr/det/setCryostatRadius 1.5 m
+/testhadr/det/setCryostatHeight 3 m
 /testhadr/det/setIsotopeMat Li7 3 7 1.85 g/cm3   # build single-isotope material
 /gun/particle neutron
 /gun/energy 2.5 MeV
@@ -259,10 +263,11 @@ doped run; the "particles at creation" table in the log lists them by name.
 
 ## How it works
 
-- **Geometry** (`src/NeuDetectorConstruction.cc`): world box of side
-  1.1 × radius filled with "Galactic" vacuum; absorber is a full sphere
-  (default 30 cm) whose material can be swapped at run time via
-  `/testhadr/det/setMat`.
+- **Geometry** (`src/NeuDetectorConstruction.cc`): a simplified GERDA-like
+  cylindrical water tank (10 m diameter x 9 m high) contains a central
+  stainless-steel cryostat with a liquid-argon inner volume. The water
+  material can be swapped at run time via `/testhadr/det/setMat`; Gd doping
+  applies to the water volume only.
 - **Materials**: `Water_ts` (pressurized water, thermal-scattering hydrogen),
   `WaterGd_ts` (0.1 wt% natural Gd — natural Gd is 14.8% Gd-155 and 15.65%
   Gd-157, whose capture cross sections are ~61 kbarn and ~254 kbarn), D₂O,
@@ -276,14 +281,17 @@ doped run; the "particles at creation" table in the log lists them by name.
 - **Capture counting** (`src/NeuSteppingAction.cc`): every step whose process
   is `nCapture` hands the residual nucleus (a secondary of the step) to
   `Run::CountCapture`; the end-of-run report splits captures into H / Gd /
-  other and prints the Gd share.
+  other and prints the Gd share. The same step is saved to the `capture`
+  ROOT ntuple with event ID, volume, material, target isotope, position,
+  radius, time, path length, and capture-gamma information.
 
 ## Output
 
 - Console: process-call frequencies, capture summary (the headline number),
   energy deposit/leakage means, particle creation and emergence tables.
 - `<file>.root`: Geant4 histograms, including capture path length, capture
-  time, and capture radius. Browse with `root <file>.root` and `TBrowser b`.
+  time, and capture radius. It also contains the `capture` ntuple with one row
+  per neutron capture. Browse with `root <file>.root` and `TBrowser b`.
 - `gd_capture_share.png` and `capture_length_comparison.png`: comparison plots
   from the standalone plotting scripts.
 

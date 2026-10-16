@@ -4,7 +4,12 @@
 #include "HistoManager.hh"
 
 #include "G4AnalysisManager.hh"
+#include "G4Event.hh"
+#include "G4EventManager.hh"
+#include "G4LogicalVolume.hh"
 #include "G4RunManager.hh"
+#include "G4SystemOfUnits.hh"
+#include "G4VPhysicalVolume.hh"
 
 NeuSteppingAction::NeuSteppingAction(NeuEventAction* event) : fEventAction(event) {}
 NeuSteppingAction::~NeuSteppingAction() {}
@@ -20,6 +25,10 @@ void NeuSteppingAction::UserSteppingAction(const G4Step* aStep)
   // count neutron captures by target element:
   // the residual nucleus (Z=64 excited Gd, Z=1 deuteron, ...) is a secondary of the step
   if (process && process->GetProcessName() == "nCapture") {
+    const auto& touchable = aStep->GetPreStepPoint()->GetTouchableHandle();
+    const auto* volume = touchable ? touchable->GetVolume() : nullptr;
+    run->RecordCaptureVolume(volume ? volume->GetName() : "Unknown");
+
     const G4double captureLength = aStep->GetTrack()->GetTrackLength();
     run->RecordCaptureLength(captureLength);
     run->RecordCaptureTime(aStep->GetTrack()->GetGlobalTime());
@@ -44,6 +53,29 @@ void NeuSteppingAction::UserSteppingAction(const G4Step* aStep)
         }
       }
     }
+    const G4ThreeVector position = aStep->GetPostStepPoint()->GetPosition();
+    const auto* logicalVolume = volume ? volume->GetLogicalVolume() : nullptr;
+    const G4String materialName =
+      logicalVolume && logicalVolume->GetMaterial()
+        ? logicalVolume->GetMaterial()->GetName()
+        : "Unknown";
+    const auto* event = G4EventManager::GetEventManager()->GetConstCurrentEvent();
+    auto* analysis = G4AnalysisManager::Instance();
+    analysis->FillNtupleIColumn(0, event ? event->GetEventID() : -1);
+    analysis->FillNtupleSColumn(1, volume ? volume->GetName() : "Unknown");
+    analysis->FillNtupleSColumn(2, materialName);
+    analysis->FillNtupleIColumn(3, Z);
+    analysis->FillNtupleIColumn(4, A);
+    analysis->FillNtupleDColumn(5, position.x() / cm);
+    analysis->FillNtupleDColumn(6, position.y() / cm);
+    analysis->FillNtupleDColumn(7, position.z() / cm);
+    analysis->FillNtupleDColumn(8, position.mag() / cm);
+    analysis->FillNtupleDColumn(9, aStep->GetTrack()->GetGlobalTime() / microsecond);
+    analysis->FillNtupleDColumn(10, captureLength / cm);
+    analysis->FillNtupleDColumn(11, gammaEnergy / MeV);
+    analysis->FillNtupleIColumn(12, gammaMultiplicity);
+    analysis->AddNtupleRow();
+
     const G4String isotope = "Z" + std::to_string(Z) + "A" + std::to_string(A);
     run->CountCapture(Z, A);
     run->RecordCaptureLengthByIsotope(isotope, captureLength);

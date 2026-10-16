@@ -20,6 +20,7 @@ public:
   void SetPrimary(G4ParticleDefinition* particle, G4double energy);
   void CountProcesses(const G4VProcess* process);
   void CountCapture(G4int Z, G4int A);
+  void RecordCaptureVolume(const G4String& volume);
   void RecordCaptureLengthByIsotope(const G4String& isotope, G4double length);
   void RecordCaptureGamma(G4double energy, G4int multiplicity);
   void ResetEventCaptureGamma();
@@ -74,6 +75,7 @@ private:
   static constexpr G4int kContainmentBins = 60;
   std::array<G4int, kContainmentBins> fContainmentHistogram{};
   std::map<G4String, G4int> fCaptureIsotopes;
+  std::map<G4String, G4int> fCaptureVolumes;
   struct CaptureLengthStats
   {
     G4int count = 0;

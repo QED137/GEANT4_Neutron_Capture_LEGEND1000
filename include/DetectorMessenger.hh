@@ -24,6 +24,10 @@ private:
   G4UIdirectory* fDetDir = nullptr;
   G4UIcmdWithAString* fMaterCmd = nullptr;
   G4UIcmdWithADoubleAndUnit* fSizeCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fTankRadiusCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fTankHeightCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fCryostatRadiusCmd = nullptr;
+  G4UIcmdWithADoubleAndUnit* fCryostatHeightCmd = nullptr;
   G4UIcmdWithADouble* fGdFractionCmd = nullptr;
   G4UIcommand* fIsotopeCmd = nullptr;
 };

@@ -55,6 +55,11 @@ void Run::CountCapture(G4int Z, G4int A)
   ++fCaptureIsotopes[isotope];
 }
 
+void Run::RecordCaptureVolume(const G4String& volume)
+{
+  ++fCaptureVolumes[volume];
+}
+
 void Run::RecordCaptureLengthByIsotope(const G4String& isotope, G4double length)
 {
   auto& stats = fCaptureLengthByIsotope[isotope];
@@ -203,6 +208,8 @@ void Run::Merge(const G4Run* run)
     fContainmentHistogram[i] += localRun->fContainmentHistogram[i];
   for (const auto& isotope : localRun->fCaptureIsotopes)
     fCaptureIsotopes[isotope.first] += isotope.second;
+  for (const auto& volume : localRun->fCaptureVolumes)
+    fCaptureVolumes[volume.first] += volume.second;
   for (const auto& isotope : localRun->fCaptureLengthByIsotope) {
     auto& stats = fCaptureLengthByIsotope[isotope.first];
     stats.count += isotope.second.count;
@@ -313,6 +320,13 @@ void Run::EndOfRun()
          << "   escape probability = "
          << 100. * fEscapedNeutrons / (numberOfEvent > 0 ? numberOfEvent : 1)
          << " %" << G4endl;
+
+  G4cout << "\n Capture volumes :" << G4endl;
+  for (const auto& volume : fCaptureVolumes) {
+    G4cout << " capture_volume " << volume.first << " " << volume.second
+           << " " << 100. * volume.second / (nCap > 0 ? nCap : 1)
+           << " %" << G4endl;
+  }
 
   G4cout << "\n Capture isotopes :" << G4endl;
   for (const auto& isotope : fCaptureIsotopes)
